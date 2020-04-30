@@ -1,11 +1,11 @@
 import { getCustomRepository, getRepository } from 'typeorm';
-// import AppError from '../errors/AppError';
+import AppError from '../errors/AppError';
 
 import TransactionRepository from '../repositories/TransactionsRepository';
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
 
-interface Resquest {
+interface Request {
   title: string;
   value: number;
   type: 'income' | 'outcome';
@@ -13,28 +13,42 @@ interface Resquest {
 }
 
 class CreateTransactionService {
-  // private transactionRepository: TransactionRepository;
-
-  // constructor(transactionRepository: TransactionRepository) {
-  //   this.transactionRepository = transactionRepository;
-  // }
-
-  public async execute({title, value, type, category}: Request): Promise<Transaction> {
+  public async execute({
+    title,
+    value,
+    type,
+    category,
+  }: Request): Promise<Transaction> {
     const transactionRepository = getCustomRepository(TransactionRepository);
     const categoryRepository = getRepository(Category);
 
-    const checkCategoryExists = await categoryRepository.findOne({
-      where: { category: title },
+    if (!['income', 'outcome'].includes(type)) {
+      throw new AppError('O tipo da transação deve ser income ou outcome.');
+    }
+
+    const { total } = await transactionRepository.getBalance();
+
+    if (type === 'outcome' && total < value) {
+      throw new AppError('You do not have enough balance'); // 1 hr do video
+    }
+
+    let transactionCategory = await categoryRepository.findOne({
+      where: { title: category },
     });
 
-    if (checkCategoryExists) {
-      categoryRepository.;
+    if (!transactionCategory) {
+      transactionCategory = categoryRepository.create({
+        title: category,
+      });
     }
+
+    await categoryRepository.save(transactionCategory);
 
     const transaction = transactionRepository.create({
       title,
       value,
       type,
+      category: transactionCategory,
     });
 
     await transactionRepository.save(transaction);

@@ -31,17 +31,8 @@ export default class CreateCategory1587732805914 implements MigrationInterface {
       }),
     );
   }
-  /** uuid_generate_v4()
-   * CREATE OR REPLACE FUNCTION public.uuid_generate_v4()
- RETURNS uuid
- LANGUAGE c
- PARALLEL SAFE STRICT
-AS '$libdir/uuid-ossp', $function$uuid_generate_v4$function$
-;
 
-   */
-
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropTable('categories');
   }
 }
