@@ -38,21 +38,17 @@ transactionsRouter.post('/', async (request, response) => {
 });
 
 transactionsRouter.delete('/:id', async (request, response) => {
-  try {
-    const { id } = request.params;
+  const { id } = request.params;
 
-    const transactionsRepository = getCustomRepository(TransactionsRepository);
+  const deteleTransaction = new DeleteTransactionService();
 
-    await transactionsRepository.delete(id);
+  await deteleTransaction.execute(id);
 
-    return response.status(200);
-  } catch (err) {
-    return response.status(400).json({ error: err.message });
-  }
+  return response.status(204).send();
 });
 
-transactionsRouter.post('/import', async (request, response) => {
-  // TODO
-});
+// transactionsRouter.post('/import', async (request, response) => {
+//   // Todo
+// });
 
 export default transactionsRouter;

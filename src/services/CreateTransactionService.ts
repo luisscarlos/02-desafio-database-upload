@@ -22,9 +22,9 @@ class CreateTransactionService {
     const transactionRepository = getCustomRepository(TransactionRepository);
     const categoryRepository = getRepository(Category);
 
-    if (!['income', 'outcome'].includes(type)) {
-      throw new AppError('O tipo da transação deve ser income ou outcome.');
-    }
+    // if (!['income', 'outcome'].includes(type)) {
+    //   throw new AppError('O tipo da transação deve ser income ou outcome.');
+    // }
 
     const { total } = await transactionRepository.getBalance();
 
