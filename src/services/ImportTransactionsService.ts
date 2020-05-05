@@ -1,41 +1,49 @@
 import csvParse from 'csv-parse';
 import fs from 'fs';
-import path from 'path';
 
-import { getCustomRepository } from 'typeorm';
+import { getCustomRepository, getRepository, In } from 'typeorm';
 
 import Transaction from '../models/Transaction';
+import Category from '../models/Category';
+
 import TransactionRepository from '../repositories/TransactionsRepository';
 
+interface CSVTransaction {
+  title: string;
+  type: 'income' | 'outcome';
+  value: number;
+  category: string;
+}
+
 class ImportTransactionsService {
-  async execute(filename: string): Promise<string[]> {
-    // Transaction[]
-
+  async execute(filePath: string): Promise<Transaction[]> {
     const transactionRepository = getCustomRepository(TransactionRepository);
-
-    const csvFilePath = path.resolve(__dirname, filename);
+    const categoriesRepository = getRepository(Category);
 
     // Lê o arquivo linha por linha
-    const readCSVStream = fs.createReadStream(csvFilePath);
+    const readCSVStream = fs.createReadStream(filePath);
 
     const parseStream = csvParse({
       from_line: 2,
-      ltrim: true,
-      rtrim: true,
     });
 
     // A cada linha lida(readCSVStream), é enviada(pipe) para parseStream
     const parseCSV = readCSVStream.pipe(parseStream);
 
-    const lines: Array<string> = [];
+    const transactions: CSVTransaction[] = [];
+    const categories: string[] = [];
 
     // Ouvindo quando as linhas são lidas
-    parseCSV.on('data', line => {
-      lines.push(line);
+    parseCSV.on('data', async line => {
+      const [title, type, value, category] = line.map((cell: string) =>
+        cell.trim(),
+      );
 
-      const convertToObject = { ...line };
-      console.log(`Linha Objeto: ${convertToObject}`);
-      console.log(line);
+      if (!title || !type || !value) return;
+
+      categories.push(category);
+
+      transactions.push({ title, type, value, category });
     });
 
     await new Promise(resolve => {
@@ -43,8 +51,21 @@ class ImportTransactionsService {
       console.log('Leitura do CSV finalizada.');
     });
 
-    console.log(lines);
-    return lines;
+    const existentCategories = await categoriesRepository.find({
+      where: {
+        title: In(categories),
+      },
+    });
+
+    const existentCategoriesTitles = existentCategories.map(
+      (category: Category) => category.title,
+    );
+
+    const addCategoryTitles = categories.filter(
+      category => !existentCategoriesTitles.includes(category),
+    );
+
+    console.log(addCategoryTitles);
   }
 }
 
