@@ -4,7 +4,10 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import 'express-async-errors';
 
+import cors from 'cors';
+
 import routes from './routes';
+
 import AppError from './errors/AppError';
 
 import createConnection from './database';
@@ -13,6 +16,7 @@ createConnection();
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 app.use(routes);
 
 app.use((err: Error, request: Request, response: Response, _: NextFunction) => {
